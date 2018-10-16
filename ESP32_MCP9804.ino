@@ -1,5 +1,5 @@
 #include <Wire.h>
-#include "MCP9801.h"
+#include "MCP9804.h"
 
 uint64_t chipid;  
 uint16_t ManufactureID;
@@ -67,19 +67,51 @@ void MCP9804_read_devID(void)
 
 uint16_t MCP9804_read_temp(void)
 {
-  byte dataH,dataL,num;
-  uint16_t temp;
-  
+  uint8_t     UpperByte;
+  uint8_t     LowerByte;
+  uint8_t     temperature;
+  uint32_t    tempeature_point;
+  uint16_t  temp;
+  byte num;
+
   Wire.beginTransmission(MCP9804_DEVICE_ADDR);
   Wire.write(MCP9804_ADDR_TEMPERATURE);
   Wire.endTransmission();
   Wire.requestFrom(MCP9804_DEVICE_ADDR,2);
   num=Wire.available();
-  Serial.printf("num:%d\n",num);
-  dataH=Wire.read(); 
-  dataL=Wire.read();
-  temp = (dataH << 8) | dataL; 
+  if(num!=2){
+    Serial.printf("I2C failed @ MCP9804_read_temp\n");
+    while(1);
+  }
+
+  UpperByte=Wire.read(); 
+  LowerByte=Wire.read();
+  temp = (UpperByte << 8) | LowerByte; 
   Serial.printf("MCP9804: temperature [0x%04x]\n",temp);
+
+  if(UpperByte&0x80){
+      Serial.printf("Warning: Temperature Critical\r\n");
+  }
+      if(UpperByte&0x40){
+      Serial.printf("Warning: Temperature Upper\r\n");
+  }
+  if(UpperByte&0x20){
+      Serial.printf("Warning: Temperature Lower\r\n");
+  }
+  
+  UpperByte = UpperByte & 0x1F; //Clear flag bits
+  if ((UpperByte & 0x10) == 0x10){ //TA < 0°C
+      UpperByte = UpperByte & 0x0F; //Clear SIGN
+      temperature = 256 - ((UpperByte << 4) + (LowerByte >> 4));
+  }
+  else{ //TA ≥ 0°C
+      temperature = ((UpperByte << 4) + (LowerByte >> 4));
+  }
+  
+    tempeature_point = (uint32_t)625*(uint32_t)(LowerByte&0x0f);
+
+    printf("Temprature: %u.%04u[C]\r\n\r\n",temperature,tempeature_point);
+    
 
   return (temp);
 }
