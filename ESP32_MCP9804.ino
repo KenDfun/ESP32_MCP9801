@@ -1,5 +1,24 @@
+#include <ETH.h>
+#include <WiFi.h>
+#include <WiFiAP.h>
+#include <WiFiClient.h>
+#include <WiFiGeneric.h>
+#include <WiFiMulti.h>
+#include <WiFiScan.h>
+#include <WiFiServer.h>
+#include <WiFiSTA.h>
+#include <WiFiType.h>
+#include <WiFiUdp.h>
+
+#include <Ambient.h>
+
 #include <Wire.h>
+
 #include "MCP9804.h"
+
+WiFiMulti wifiMulti;
+WiFiClient client;
+Ambient ambient;
 
 uint64_t chipid;  
 uint16_t ManufactureID;
@@ -33,6 +52,16 @@ void setup() {
     while(1);
   }
 
+  wifiMulti.addAP("IOT1", "IOTIOTIOT");
+  Serial.print("Wait wifi connect ");
+  while(wifiMulti.run() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println("Conected!");
+  Serial.printf("IP : %d\n",WiFi.localIP());
+  
+  ambient.begin(7144, "d6c94918db330a21", &client); // チャネルIDとライトキーを指定してAmbientの初期化
 }
 
 
@@ -70,9 +99,10 @@ uint16_t MCP9804_read_temp(void)
   uint8_t     UpperByte;
   uint8_t     LowerByte;
   uint8_t     temperature;
-  uint32_t    tempeature_point;
+  uint32_t    temperature_point;
   uint16_t  temp;
   byte num;
+  double temp_d;
 
   Wire.beginTransmission(MCP9804_DEVICE_ADDR);
   Wire.write(MCP9804_ADDR_TEMPERATURE);
@@ -108,9 +138,14 @@ uint16_t MCP9804_read_temp(void)
       temperature = ((UpperByte << 4) + (LowerByte >> 4));
   }
   
-    tempeature_point = (uint32_t)625*(uint32_t)(LowerByte&0x0f);
+    temperature_point = (uint32_t)625*(uint32_t)(LowerByte&0x0f);
 
-    printf("Temprature: %u.%04u[C]\r\n\r\n",temperature,tempeature_point);
+    printf("Temprature: %u.%04u[C]\n",temperature,temperature_point);
+    temp_d = (double)temperature+(temperature_point/10000.0);
+    printf("temp_d: %f[C]\n\n",temp_d);
+
+    ambient.set(1,temp_d);
+    ambient.send();
     
 
   return (temp);
@@ -122,7 +157,7 @@ void loop() {
 
   MCP9804_read_temp();    
   
-  delay(1500);
+  delay(500);
   digitalWrite(4, LOW);
-  delay(1500);
+  delay(4500);
 }
