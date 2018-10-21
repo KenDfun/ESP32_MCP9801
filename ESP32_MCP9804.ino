@@ -12,9 +12,10 @@
 
 #include <Ambient.h>
 
-#include <Wire.h>
 
 #include "MCP9804.h"
+
+#define MCP9804_DEVICE_ADDR          0x18
 
 WiFiMulti wifiMulti;
 WiFiClient client;
@@ -39,18 +40,8 @@ void setup() {
   Serial.printf("ESP32 Chip ID [%04x",(uint16_t)(chipid>>32));//print High 2 bytes
   Serial.printf("%08x]\n",(uint32_t)chipid);//print Low 4bytes.
 
-  
-  Wire.begin();
-  Wire.beginTransmission(MCP9804_DEVICE_ADDR);
-  error = Wire.endTransmission();
-  if(error==0){
-    Serial.printf("Found Device\n");
-    MCP9804_read_devID();
-  }
-  else{
-    Serial.printf("Not Found Device\n");    
-    while(1);
-  }
+
+  Mcp9804.begin(MCP9804_DEVICE_ADDR);
 
   wifiMulti.addAP("IOT1", "IOTIOTIOT");
   Serial.print("Wait wifi connect ");
@@ -61,38 +52,11 @@ void setup() {
   Serial.println("Conected!");
   Serial.printf("IP : %d\n",WiFi.localIP());
   
-  ambient.begin(7144, "d6c94918db330a21", &client); // チャネルIDとライトキーを指定してAmbientの初期化
+  ambient.begin(7189, "fe1ffb644b0c3611", &client); // チャネルIDとライトキーを指定してAmbientの初期化
 }
 
 
 
-void MCP9804_read_devID(void)
-{
-  byte dataH,dataL,num;
- 
-  Wire.beginTransmission(MCP9804_DEVICE_ADDR);
-  Wire.write(MCP9804_ADDR_MANUFACTURE_ID);
-  Wire.endTransmission();
-  Wire.requestFrom(MCP9804_DEVICE_ADDR,2);
-  num=Wire.available();
-  Serial.printf("num:%d\n",num);
-  dataH=Wire.read(); 
-  dataL=Wire.read();
-  
-  ManufactureID = (dataH << 8) | dataL; 
-  Serial.printf("MCP9804: Manufacture ID[0x%04x]\n",ManufactureID);
-
-  Wire.beginTransmission(MCP9804_DEVICE_ADDR);
-  Wire.write(MCP9804_ADDR_DEVICE_ID);
-  Wire.endTransmission();
-  Wire.requestFrom(MCP9804_DEVICE_ADDR,2);
-  num=Wire.available();
-  Serial.printf("num:%d\n",num);
-  DeviceID=Wire.read(); 
-  Revision=Wire.read();
-  Serial.printf("MCP9804: Device ID[0x%02x]\n",DeviceID);
-  Serial.printf("MCP9804: Revision [0x%02x]\n",Revision);  
-}
 
 uint16_t MCP9804_read_temp(void)
 {
@@ -159,5 +123,5 @@ void loop() {
   
   delay(500);
   digitalWrite(4, LOW);
-  delay(4500);
+  delay(10000);
 }
