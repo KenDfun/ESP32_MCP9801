@@ -1,7 +1,7 @@
 #ifndef MCP9804_H
 #define MCP9804_H
 
-
+#include "Arduino.h"
 
 #define MCP9804_ADDR_T_CONFIG        0x01
 #define MCP9804_ADDR_T_UPPER         0x02
@@ -17,12 +17,13 @@ class MCP9804
     MCP9804(void);
 
     bool begin(uint8_t addr);
-    uint16_t getDevIDRev(void);
-    uint8_t getManufacture(void);
-    uint8_t getTemperature(void);
+    uint8_t getDevID(void);
+    uint8_t getRevision(void);
+    uint16_t getManufacture(void);
+    double getTemperature(void);
 
   private:
     uint8_t i2cAddr;
-}
+};
 
 #endif
