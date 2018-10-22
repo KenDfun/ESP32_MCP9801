@@ -28,12 +28,11 @@ uint8_t DeviceID;
 uint8_t Revision;
 
 void setup() {
-
-    
-  // put your setup code here, to run once:
+  // LED Setup
   pinMode(4, OUTPUT);
+  // I2C Setup
   pinMode(21, INPUT_PULLUP);
-  pinMode(21, INPUT_PULLUP);
+  pinMode(22, INPUT_PULLUP);
 
   Serial.begin(115200);
 
@@ -43,6 +42,13 @@ void setup() {
 
 
   Mcp9804.begin(MCP9804_DEVICE_ADDR);
+  Serial.printf("MCP9804: Manufacture ID: [0x%08x]\n",Mcp9804.getManufacture());
+  Serial.printf("MCP9804: Device ID:      [0x%02x]\n",Mcp9804.getDevID());  
+  Serial.printf("MCP9804: Revision:       [0x%02x]\n",Mcp9804.getRevision());
+  //dummy read cause first and second data sometimes wrong.
+  Mcp9804.getTemperature();
+  delay(500);
+  Mcp9804.getTemperature();
 
 #ifdef USE_AMBIENT
   wifiMulti.addAP("IOT1", "IOTIOTIOT");
@@ -62,17 +68,20 @@ void setup() {
 
 
 void loop() {
+  double dtemp;
+  
   // put your main code here, to run repeatedly:
   digitalWrite(4, HIGH);
-
-  Mcp9804.getTemperature();
+  delay(250);
+  
+  dtemp=Mcp9804.getTemperature();
+  Serial.printf("temp_d: %.04f[C]\n\n",dtemp);
 
 #ifdef USE_AMBIENT  
   ambient.set(1,temp_d);
   ambient.send();
 #endif
   
-  delay(500);
   digitalWrite(4, LOW);
-  delay(1000);
+  delay(10000);
 }

@@ -24,6 +24,7 @@ class MCP9804
 
   private:
     uint8_t i2cAddr;
+    uint16_t readI2CData(uint8_t subaddr);
 };
 
 #endif
