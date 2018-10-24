@@ -21,10 +21,15 @@ class MCP9804
     uint8_t getRevision(void);
     uint16_t getManufacture(void);
     double getTemperature(void);
+    void setUpperTemperature(double);
+    void setCriticalTemperature(double);
+    void setLowerTemperature(double);
 
   private:
     uint8_t i2cAddr;
     uint16_t readI2CData(uint8_t subaddr);
+    void writeI2CData(uint8_t subaddr,uint8_t upperByte,uint8_t lowerByte);
+    void calcTempReg(double dtemp,uint8_t *pupperBit,uint8_t *plowerBit);
 };
 
 #endif
